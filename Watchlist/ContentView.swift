@@ -31,7 +31,7 @@ struct ContentView: View {
     @State public var searchResultData: [TVShowAndMovieData] = []
     @State private var isPopupPresented: Bool = false
     @State private var newShow: String = ""
-    @State private var isButtonPressed: Bool = false
+    @State private var buttonState = ButtonState.notPressed
     @State private var newMovie: String = ""
     @State private var isShowingTextField: Bool = false
     
@@ -74,19 +74,19 @@ struct ContentView: View {
                             Spacer()
                             if mediaType == .shows {
                                 addShowButton
-                                    .styleButton(isButtonPressed: isButtonPressed, colorScheme: colorScheme)
+                                    .styleButton(buttonState: buttonState, colorScheme: colorScheme)
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
-                                            .onChanged { _ in isButtonPressed = true }
-                                            .onEnded { _ in isButtonPressed = false }
+                                            .onChanged { _ in buttonState = .pressed }
+                                            .onEnded { _ in buttonState = .notPressed }
                                     )
                             } else {
                                 addMovieButton
-                                    .styleButton(isButtonPressed: isButtonPressed, colorScheme: colorScheme)
+                                    .styleButton(buttonState: buttonState, colorScheme: colorScheme)
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
-                                            .onChanged { _ in isButtonPressed = true }
-                                            .onEnded { _ in isButtonPressed = false }
+                                            .onChanged { _ in buttonState = .pressed }
+                                            .onEnded { _ in buttonState = .notPressed }
                                     )
                             }
                         }
@@ -174,17 +174,17 @@ struct ContentView: View {
         }
     }
     
-    /// Saves the selected new show into the json file which is accessed by `showDataManager`
-    ///
-    /// - Returns: None.
-    func saveShow() {
-        if newShow.isEmpty == false {
-            showDataManager.addShow(show: newShow)
-            isShowingTextField = false
-            newShow = ""
-            showDataManager.saveShows()
-        }
-    }
+//    /// Saves the selected new show into the json file which is accessed by `showDataManager`
+//    ///
+//    /// - Returns: None.
+//    func saveShow() {
+//        if newShow.isEmpty == false {
+//            showDataManager.addShow(show: newShow, poster)
+//            isShowingTextField = false
+//            newShow = ""
+//            showDataManager.saveShows()
+//        }
+//    }
     
     func createTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
@@ -216,7 +216,7 @@ struct ContentView: View {
     /// - Returns: None.
     func delete(indexSet: IndexSet) {
         if mediaType == .shows {
-            showDataManager.shows.remove(atOffsets: indexSet)
+            showDataManager.showsData.remove(atOffsets: indexSet)
             showDataManager.saveShows()
         } else {
             movieDataManager.movies.remove(atOffsets: indexSet)
@@ -232,12 +232,13 @@ struct ContentView: View {
     ///
     /// - Returns: None.
     func move(indices: IndexSet, newOffset: Int) {
-        if mediaType == .shows {
-            showDataManager.shows.move(fromOffsets: indices, toOffset: newOffset)
+        switch (mediaType) {
+        case .shows:
+            showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
             showDataManager.saveShows()
-        } else {
-            movieDataManager.movies.move(fromOffsets: indices, toOffset: newOffset)
-            movieDataManager.saveMovies()
+        case .movies:
+            showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
+            showDataManager.saveShows()
         }
     }
     
@@ -254,15 +255,14 @@ struct ContentView: View {
                 List {
                     Section(
                         header: Text("Shows").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                            if showDataManager.shows.isEmpty {
-                                Text("You haven't added any shows yet!")
-                                    .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
+                            if showDataManager.showsData.isEmpty {
+                                displayText(text: "You haven't added any shows yet!")
                             }
-                            ForEach(showDataManager.shows.indices, id: \.self) { index in
-                                NavigationLink(destination: ShowDetailPopup(show: showDataManager.shows[index], showIndex: index)
+                            ForEach(showDataManager.showsData.indices, id: \.self) { index in
+                                NavigationLink(destination: ShowDetailPopup(show: showDataManager.showsData[index].show, showIndex: index, posterURL: showDataManager.showsData[index].posterURL)
                                     .environmentObject(showDataManager)
                                 ) {
-                                    displayText(text: "\(index  + 1). \(showDataManager.shows[index])")
+                                    displayText(text: "\(index + 1). \(showDataManager.showsData[index].show)" + " " + (getSeasonAndEpisodeStats(index: index) ?? ""))
                                 }
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                             }
@@ -296,7 +296,7 @@ struct ContentView: View {
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                         }
                         ForEach(movieDataManager.movies.indices, id: \.self) { index in
-                            Text("\(index  + 1). \(movieDataManager.movies[index])")
+                            Text("\(index + 1). \(movieDataManager.movies[index])")
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                         }
                         .onDelete(perform: delete)
@@ -317,10 +317,10 @@ struct ContentView: View {
     ///   - result: A tv show or movie that is returned from the search.
     ///
     /// - Returns: None.
-    func handleNewMediaAdded(result: TVShowAndMovieData) {
+    func handleNewMediaAdded(result: TVShowAndMovieData, posterURL: String?) {
         switch mediaType {
         case .shows:
-            showDataManager.addShow(show: result.title)
+            showDataManager.addShow(show: result.title, posterURL: posterURL)
             showDataManager.saveShows()
             searchResultData.removeAll()
             isShowingTextField = false
@@ -337,14 +337,14 @@ struct ContentView: View {
     /// Creates a string with the current season and episode stats for a show.
     ///
     /// - Returns: The string to be displayed with the current season and episode.
-    func getSeasonAndEpisodeStats() -> String? {
-        var fullOutput: String?
+    func getSeasonAndEpisodeStats(index: Int) -> String? {
         
-        if let season = showDataManager.currentSeason, let episode = showDataManager.currentEpisode {
-            fullOutput = "S\(season), E\(episode)"
+        if let season = showDataManager.getSeason(showDataIndex: index),
+           let episode = showDataManager.getEpisode(showDataIndex: index) {
+            return "S: \(season), Ep: \(episode)"
         }
         
-        return fullOutput
+        return nil
     }
     
     /// Displays the text field after pressing `Add Show` or `Add Movie`  with search results from the users entry.
@@ -364,7 +364,7 @@ struct ContentView: View {
                             Spacer() // these spacers allow for the title/year to be centered
                             
                             Button("\(result.title), \(result.year)") {
-                                handleNewMediaAdded(result: result)
+                                handleNewMediaAdded(result: result, posterURL: result.poster)
                             }
                             .font(.headline) // make it more prominent
                             
@@ -389,7 +389,7 @@ struct ContentView: View {
                             Spacer() // these spacers allow for the title/year to be centered
                             
                             Button("\(result.title), \(result.year)") {
-                                handleNewMediaAdded(result: result)
+                                handleNewMediaAdded(result: result, posterURL: result.poster)
                             }
                             .font(.headline)
                             
@@ -412,12 +412,13 @@ struct ContentView: View {
     /// - Returns: None.
     func displayImage(imageURL: String?, imgWidth: CGFloat, imgHeight: CGFloat, cornerRadius: CGFloat = 10) -> some View {
         AsyncImage(url: URL(string: imageURL ?? "")) { image in
-            image.resizable().scaledToFit()
+            image
+                .resizable()
+                .frame(width: imgWidth, height: imgHeight)
+                .cornerRadius(cornerRadius)
         } placeholder: {
             ProgressView("Loading...")
         }
-        .frame(width: imgWidth, height: imgHeight)
-        .cornerRadius(cornerRadius)
         .padding(10)
     }
 }

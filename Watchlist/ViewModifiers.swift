@@ -16,16 +16,17 @@ extension View {
         
     }
     
-    func styleButton(isButtonPressed: Bool, colorScheme: ColorScheme) -> some View {
+    func styleButton(buttonState: ButtonState, colorScheme: ColorScheme) -> some View {
         self
             .padding()
             .padding(.trailing, 30)
             .background(colorScheme == .dark ? Color.white : AppColors.mainColor)
             .cornerRadius(50)
-            .scaleEffect(isButtonPressed ? 0.9 : 1)
-            .opacity(isButtonPressed ? 0.95 : 1)
+            .scaleEffect(buttonState == .pressed ? 0.9 : 1)
+            .opacity(buttonState == .pressed ? 0.95 : 1)
             .foregroundColor(colorScheme == .dark ? AppColors.mainColor : Color.white)
-            .animation(.easeInOut(duration: 0.2), value: isButtonPressed)
+            .animation(.easeInOut(duration: 0.2), value: buttonState)
+            .edgesIgnoringSafeArea(.all)
     }
     
     func styleTextField(

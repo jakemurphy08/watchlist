@@ -17,7 +17,7 @@ struct UpNextView: View {
     @State public var searchResultData: [TVShowAndMovieData] = []
     @State private var mediaType: MediaType = .shows
     @State private var newShow: String = ""
-    @State private var isButtonPressed: Bool = false
+    @State private var buttonState = ButtonState.notPressed
     @State private var newMovie: String = ""
     @State private var isShowingTextField: Bool = false
     @FocusState private var isTextFieldFocused: Bool
@@ -59,19 +59,19 @@ struct UpNextView: View {
                             Spacer()
                             if mediaType == .shows {
                                 addShowButton
-                                    .styleButton(isButtonPressed: isButtonPressed, colorScheme: colorScheme)
+                                    .styleButton(buttonState: buttonState, colorScheme: colorScheme)
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
-                                            .onChanged { _ in isButtonPressed = true }
-                                            .onEnded { _ in isButtonPressed = false }
+                                            .onChanged { _ in buttonState = .pressed }
+                                            .onEnded { _ in buttonState = .notPressed }
                                     )
                             } else {
                                 addMovieButton
-                                    .styleButton(isButtonPressed: isButtonPressed, colorScheme: colorScheme)
+                                    .styleButton(buttonState: buttonState, colorScheme: colorScheme)
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)
-                                            .onChanged { _ in isButtonPressed = true }
-                                            .onEnded { _ in isButtonPressed = false }
+                                            .onChanged { _ in buttonState = .pressed }
+                                            .onEnded { _ in buttonState = .notPressed }
                                     )
                             }
                         }
@@ -123,12 +123,12 @@ struct UpNextView: View {
                 List {
                     Section(
                         header: Text("Shows").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                            if showDataManager.shows.isEmpty {
+                            if showDataManager.showsData.isEmpty {
                                 Text("You haven't added any shows yet!")
                                     .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                             }
-                            ForEach(showDataManager.shows.indices, id: \.self) { index in
-                                displayText(text: "\(index  + 1). \(showDataManager.shows[index])")
+                            ForEach(showDataManager.showsData.indices, id: \.self) { index in
+                                displayText(text: "\(index  + 1). \(showDataManager.showsData[index])")
                             }
                             .onDelete(perform: delete)
                             .onMove(perform: move)
@@ -282,7 +282,7 @@ struct UpNextView: View {
     ///   - result: A tv show or movie that is returned from the search.
     ///
     /// - Returns: None.
-    func handleNewMediaAdded(result: TVShowAndMovieData) {
+    func handleNewMediaAdded(result: TVShowAndMovieData, posterURL: String? = nil) {
         switch mediaType {
         case .shows:
             showDataManager.addShow(show: result.title)
@@ -298,6 +298,7 @@ struct UpNextView: View {
             newMovie = ""
         }
     }
+    
     
     /// Creates the button for `Add Movie`
     var addMovieButton: some View {
@@ -343,7 +344,7 @@ struct UpNextView: View {
     
     func delete(indexSet: IndexSet) {
         if mediaType == .shows {
-            showDataManager.shows.remove(atOffsets: indexSet)
+            showDataManager.showsData.remove(atOffsets: indexSet)
             showDataManager.saveShows()
         } else {
             movieDataManager.movies.remove(atOffsets: indexSet)
@@ -353,7 +354,7 @@ struct UpNextView: View {
     
     func move(indices: IndexSet, newOffset: Int) {
         if mediaType == .shows {
-            showDataManager.shows.move(fromOffsets: indices, toOffset: newOffset)
+            showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
             showDataManager.saveShows()
         } else {
             movieDataManager.movies.move(fromOffsets: indices, toOffset: newOffset)
