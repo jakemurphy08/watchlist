@@ -128,7 +128,7 @@ struct UpNextView: View {
                                     .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                             }
                             ForEach(showDataManager.showsData.indices, id: \.self) { index in
-                                displayText(text: "\(index  + 1). \(showDataManager.showsData[index])")
+                                displayText(text: "\(index  + 1). \(showDataManager.showsData[index].show)")
                             }
                             .onDelete(perform: delete)
                             .onMove(perform: move)
@@ -168,12 +168,12 @@ struct UpNextView: View {
             List {
                 Section(
                     header: Text("Movies").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                        if movieDataManager.movies.isEmpty {
+                        if movieDataManager.moviesData.isEmpty {
                             Text("You haven't added any movies yet!")
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                         }
-                        ForEach(movieDataManager.movies.indices, id: \.self) { index in
-                            displayText(text: "\(index  + 1). \(movieDataManager.movies[index])")
+                        ForEach(movieDataManager.moviesData.indices, id: \.self) { index in
+                            displayText(text: "\(index  + 1). \(movieDataManager.moviesData[index].movie)")
                         }
                         .onDelete(perform: delete)
                         .onMove(perform: move)
@@ -347,7 +347,7 @@ struct UpNextView: View {
             showDataManager.showsData.remove(atOffsets: indexSet)
             showDataManager.saveShows()
         } else {
-            movieDataManager.movies.remove(atOffsets: indexSet)
+            movieDataManager.moviesData.remove(atOffsets: indexSet)
             movieDataManager.saveMovies()
         }
     }
@@ -357,7 +357,7 @@ struct UpNextView: View {
             showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
             showDataManager.saveShows()
         } else {
-            movieDataManager.movies.move(fromOffsets: indices, toOffset: newOffset)
+            movieDataManager.moviesData.move(fromOffsets: indices, toOffset: newOffset)
             movieDataManager.saveMovies()
         }
     }

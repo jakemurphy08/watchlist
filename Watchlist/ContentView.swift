@@ -206,19 +206,6 @@ struct ContentView: View {
         }
     }
     
-    /// Saves the selected new movie into the array that displays the users ranked movies
-    /// and into the json file which is accessed by `movieDataManager`.
-    ///
-    /// - Returns: None.
-    func saveMovie() {
-        if newMovie.isEmpty != true {
-            movieDataManager.movies.append(newMovie)
-            isShowingTextField = false
-            newMovie = ""
-            movieDataManager.saveMovies()
-        }
-    }
-    
     /// Removes the deleted show or movie from the array that displays the users ranked lists
     /// and from the json file which is accessed by `showDataManager` or `movieDataManager`.
     ///
@@ -231,7 +218,7 @@ struct ContentView: View {
             showDataManager.showsData.remove(atOffsets: indexSet)
             showDataManager.saveShows()
         } else {
-            movieDataManager.movies.remove(atOffsets: indexSet)
+            movieDataManager.moviesData.remove(atOffsets: indexSet)
             movieDataManager.saveMovies()
         }
     }
@@ -303,12 +290,12 @@ struct ContentView: View {
             List {
                 Section(
                     header: Text("Movies").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                        if movieDataManager.movies.isEmpty {
+                        if movieDataManager.moviesData.isEmpty {
                             Text("You haven't added any movies yet!")
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                         }
-                        ForEach(movieDataManager.movies.indices, id: \.self) { index in
-                            Text("\(index + 1). \(movieDataManager.movies[index])")
+                        ForEach(movieDataManager.moviesData.indices, id: \.self) { index in
+                            Text("\(index + 1). \(movieDataManager.moviesData[index].movie)")
                                 .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                         }
                         .onDelete(perform: delete)
