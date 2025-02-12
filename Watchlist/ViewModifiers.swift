@@ -29,27 +29,27 @@ extension View {
             .edgesIgnoringSafeArea(.all)
     }
     
-    func styleTextField(
+    func styleAddNewMediaTextField(
             isTextFieldFocused: FocusState<Bool>.Binding,
             isSearching: FocusState<Bool>.Binding,
             newShow: String,
             fetchData: ()
         ) -> some View {
-            self
-                .padding()
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .focused(isTextFieldFocused)
-                .focused(isSearching)
-                .autocorrectionDisabled(true)
-                .textInputAutocapitalization(.words)
-                .onAppear {
-                    isTextFieldFocused.wrappedValue = true
-                    isSearching.wrappedValue = true
-                }
-                .onChange(of: newShow) {
-                    fetchData
-                }
-        }
+        self
+            .padding()
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .focused(isTextFieldFocused)
+            .focused(isSearching)
+            .autocorrectionDisabled(true)
+            .textInputAutocapitalization(.words)
+            .onAppear {
+                isTextFieldFocused.wrappedValue = true
+                isSearching.wrappedValue = true
+            }
+            .onChange(of: newShow) {
+                fetchData
+            }
+    }
 }
 
 #Preview {

@@ -188,10 +188,22 @@ struct ContentView: View {
     
     func createTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
-            .styleTextField(isTextFieldFocused: $isTextFieldFocused,
+            .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
                        isSearching: $isSearching,
                        newShow: newShow,
                        fetchData: fetchData(query: newShow))
+        .onSubmit {
+            
+            if let result = searchResultData.first {
+                isTextFieldFocused = false
+                isSearching = false
+                
+                handleNewMediaAdded(result: result, posterURL: result.poster)
+            } else {
+                isTextFieldFocused = true
+                isSearching = true
+            }
+        }
     }
     
     /// Saves the selected new movie into the array that displays the users ranked movies

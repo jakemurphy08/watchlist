@@ -250,7 +250,7 @@ struct UpNextView: View {
     
     func createTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
-            .styleTextField(isTextFieldFocused: $isTextFieldFocused,
+            .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
                        isSearching: $isSearching,
                        newShow: newShow,
                        fetchData: fetchData(query: newShow))

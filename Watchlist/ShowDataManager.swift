@@ -50,6 +50,12 @@ class ShowDataManager: ObservableObject {
     }
     
     func addShow(show: String, posterURL: String? = nil) {
+        
+        if showsData.contains(where: { showData in
+            showData.show == show
+        }) {
+            return
+        }
         showsData.append(UserShowData(show: show, poster: posterURL))
         self.saveShows()
     }
@@ -73,17 +79,13 @@ class ShowDataManager: ObservableObject {
     }
     
     func setSeason(showDataIndex: Int, season: String?) {
-        if let season = season {
-            showsData[showDataIndex].currentSeason = season
-            self.saveShows()
-        }
+        showsData[showDataIndex].currentSeason = season
+        self.saveShows()
     }
     
     func setEpisode(showDataIndex: Int, episode: String?) {
-        if let episode = episode {
-            showsData[showDataIndex].currentEpisode = episode
-            self.saveShows()
-        }
+        showsData[showDataIndex].currentEpisode = episode
+        self.saveShows()
     }
     
     func getSeason(showDataIndex: Int) -> String? {
