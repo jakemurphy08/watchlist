@@ -16,6 +16,26 @@ extension View {
         
     }
     
+    func styleList() -> some View {
+        self
+            .shadow(radius: 3)
+            .scrollContentBackground(.hidden)
+            .frame(maxHeight: 450)
+    }
+    
+    func styleListHeaderText(_ colorScheme: ColorScheme, position: Edge.Set) -> some View {
+        self
+            .changeAppearance(colorScheme: colorScheme)
+            .padding(position, 25)
+            .fontWeight(.light)
+            .font(.system(size: 13))
+    }
+    
+    func changeAppearance(colorScheme: ColorScheme) -> some View {
+        self
+            .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
+    }
+    
     func styleButton(buttonState: ButtonState, colorScheme: ColorScheme) -> some View {
         self
             .padding()

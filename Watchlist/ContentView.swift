@@ -7,21 +7,11 @@
 
 import SwiftUI
 
-public struct AppColors {
-    static let mainColor = Color(red: 17/255, green: 22/255, blue: 66/255)
-    static let secondaryColor = Color(red: 49/255, green: 56/255, blue: 112/255)
-}
-
-enum MediaType {
-    case movies
-    case shows
-}
-
 struct ContentView: View {
     
     // Data managers
-    @StateObject private var showDataManager = ShowDataManager(fileName: "shows.json")
-    @StateObject private var movieDataManager = MovieDataManager(fileName: "movies.json")
+    @StateObject var showDataManager = ShowDataManager(fileName: "shows.json")
+    @StateObject var movieDataManager = MovieDataManager(fileName: "movies.json")
     
     // Environment
     @Environment(\.colorScheme) var colorScheme
@@ -29,7 +19,6 @@ struct ContentView: View {
     // UI states
     @State private var mediaType: MediaType = .shows
     @State public var searchResultData: [TVShowAndMovieData] = []
-    @State private var isPopupPresented: Bool = false
     @State private var newShow: String = ""
     @State private var buttonState = ButtonState.notPressed
     @State private var newMovie: String = ""
@@ -53,13 +42,13 @@ struct ContentView: View {
                     Spacer(minLength: 0)
                     
                     if mediaType == .shows {
-                        showList(isSearching: isSearching)
-                            .offset(y: -180)
+                        displayShowList(isSearching: isSearching)
+                            .offset(y: -180) // moves the list up on the screen
                         if isShowingTextField {
                             showRankedTextField()
                         }
                     } else {
-                        movieList(isSearching: isSearching)
+                        displayMovieList(isSearching: isSearching)
                             .offset(y: -180)
                         if isShowingTextField {
                             showRankedTextField()
@@ -103,10 +92,6 @@ struct ContentView: View {
                 }
                 
                 if isShowingTextField == false {
-                    ToolbarItem(placement: .topBarLeading) {
-                        EditButton()
-                            .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
-                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         NavigationLink(destination: UpNextView()) {
                             displayText(text: "Up Next")
@@ -142,51 +127,32 @@ struct ContentView: View {
         Button("Cancel") {
             cancelAddingAShowOrMovie()
         }
-        .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
-    }
-    
-    /// Displays text using the correct font color.
-    ///
-    /// - Parameters:
-    ///     - text: The text to be displayed.
-    ///     - isBold: True if the text should be bold.
-    ///
-    ///  - Returns: The text view with the given text.
-    func displayText(text: String, isBold: Bool = false) -> some View {
-        Text(text)
-            .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
-            .bold(isBold)
+        .changeAppearance(colorScheme: colorScheme)
     }
     
     /// Cancels the process of adding a show or movie.
     ///
     /// - Returns: None.
-    func cancelAddingAShowOrMovie() {
+    private func cancelAddingAShowOrMovie() {
         isShowingTextField = false
-        
+                
         switch mediaType {
         case .shows:
             newShow = ""
-            searchResultData.removeAll()
         case .movies:
             newMovie = ""
-            searchResultData.removeAll()
         }
+        
+        searchResultData.removeAll()
     }
     
-//    /// Saves the selected new show into the json file which is accessed by `showDataManager`
-//    ///
-//    /// - Returns: None.
-//    func saveShow() {
-//        if newShow.isEmpty == false {
-//            showDataManager.addShow(show: newShow, poster)
-//            isShowingTextField = false
-//            newShow = ""
-//            showDataManager.saveShows()
-//        }
-//    }
-    
-    func createTextField(fieldText: String) -> some View {
+    /// Displays a text field for searching for a show/movie. It styles the field accordingly and handles the user pressing `return`.
+    ///
+    /// - Parameters:
+    ///   - fieldText: The text that displays in the text field before any input.
+    ///
+    /// - Returns: The view of the text field.
+    private func createSearchTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
             .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
                        isSearching: $isSearching,
@@ -198,7 +164,7 @@ struct ContentView: View {
                 isTextFieldFocused = false
                 isSearching = false
                 
-                handleNewMediaAdded(result: result, posterURL: result.poster)
+                handleNewMediaAdded(result: result)
             } else {
                 isTextFieldFocused = true
                 isSearching = true
@@ -213,7 +179,7 @@ struct ContentView: View {
     ///   - indexSet: The index of the show/movie to remove.
     ///
     /// - Returns: None.
-    func delete(indexSet: IndexSet) {
+    private func delete(indexSet: IndexSet) {
         if mediaType == .shows {
             showDataManager.showsData.remove(atOffsets: indexSet)
             showDataManager.saveShows()
@@ -230,7 +196,7 @@ struct ContentView: View {
     ///   - newOffset: The new index of the show/movie to be moved.
     ///
     /// - Returns: None.
-    func move(indices: IndexSet, newOffset: Int) {
+    public func move(indices: IndexSet, newOffset: Int) {
         switch (mediaType) {
         case .shows:
             showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
@@ -248,32 +214,38 @@ struct ContentView: View {
     ///
     /// - Returns: The view of the list.
     @ViewBuilder
-    func showList(isSearching: Bool) -> some View {
+    func displayShowList(isSearching: Bool) -> some View {
         ZStack {
             if isSearching == false {
-                List {
-                    Section(
-                        header: Text("Shows").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                            if showDataManager.showsData.isEmpty {
-                                displayText(text: "You haven't added any shows yet!")
-                            }
+                VStack(spacing: 0) {
+                    
+                    displayListHeaders(mediaType: mediaType, colorScheme: colorScheme)
+                    
+                    List {
+                        if showDataManager.showsData.isEmpty {
+                            displayText(text: "You haven't added any shows yet!")
+                        } else {
                             ForEach(showDataManager.showsData.indices, id: \.self) { index in
-                                NavigationLink(destination: ShowDetailPopup(show: showDataManager.showsData[index].show, showIndex: index, posterURL: showDataManager.showsData[index].posterURL)
+                                let showInList = showDataManager.showsData[index]
+                                
+                                NavigationLink(destination: ShowDetailPopupView(show: showInList.show, showIndex: index, posterURL: showInList.posterURL)
                                     .environmentObject(showDataManager)
                                 ) {
-                                    displayText(text: "\(index + 1). \(showDataManager.showsData[index].show)" + " " + (getSeasonAndEpisodeStats(index: index) ?? ""))
+                                    HStack {
+                                        StarRatingOverlay(rating: showInList.ratingOutOfTen ?? 0.0)
+                                        displayText(text: "\(index + 1). \(showInList.show)" + " " + (getSeasonAndEpisodeStats(index: index) ?? ""))
+                                    }
                                 }
-                                .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
                             }
                             .onDelete(perform: delete)
                             .onMove(perform: move)
                         }
+                    }
+                    .styleList()
+                    .onAppear {
+                        showDataManager.loadShows()
+                    }
                 }
-                .scrollContentBackground(.hidden)
-                .onAppear {
-                    showDataManager.loadShows()
-                }
-                .frame(maxHeight: 450)
             }
         }
     }
@@ -285,28 +257,38 @@ struct ContentView: View {
     ///
     /// - Returns: The view of the list.
     @ViewBuilder
-    func movieList(isSearching: Bool) -> some View {
+    func displayMovieList(isSearching: Bool) -> some View {
         if isSearching == false {
-            List {
-                Section(
-                    header: Text("Movies").foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)) {
-                        if movieDataManager.moviesData.isEmpty {
-                            Text("You haven't added any movies yet!")
-                                .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
-                        }
+            VStack(spacing: 0) {
+                
+                displayListHeaders(mediaType: mediaType, colorScheme: colorScheme)
+                
+                List {
+                    if movieDataManager.moviesData.isEmpty {
+                        displayText(text: "You haven't added any movies yet!")
+                    } else {
                         ForEach(movieDataManager.moviesData.indices, id: \.self) { index in
-                            Text("\(index + 1). \(movieDataManager.moviesData[index].movie)")
-                                .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
+                            let movieInList = movieDataManager.moviesData[index]
+                            
+                            NavigationLink(destination: MovieDetailPopupView(movie: movieInList.movie, movieIndex: index, posterURL: movieInList.posterURL)
+                                .environmentObject(movieDataManager)
+                            ) {
+                                HStack {
+                                    StarRatingOverlay(rating: movieInList.ratingOutOfTen ?? 0.0)
+                                    displayText(text: "\(index + 1). \(movieInList.movie)")
+                                }
+                            }
+                            .changeAppearance(colorScheme: colorScheme)
                         }
                         .onDelete(perform: delete)
                         .onMove(perform: move)
                     }
+                }
+                .styleList()
+                .onAppear {
+                    movieDataManager.loadMovies()
+                }
             }
-            .scrollContentBackground(.hidden)
-            .onAppear {
-                movieDataManager.loadMovies()
-            }
-            .frame(maxHeight: 450)
         }
     }
     
@@ -316,21 +298,20 @@ struct ContentView: View {
     ///   - result: A tv show or movie that is returned from the search.
     ///
     /// - Returns: None.
-    func handleNewMediaAdded(result: TVShowAndMovieData, posterURL: String?) {
+    func handleNewMediaAdded(result: TVShowAndMovieData) {
         switch mediaType {
         case .shows:
-            showDataManager.addShow(show: result.title, posterURL: posterURL)
+            showDataManager.addShow(show: result.title, posterURL: result.poster)
             showDataManager.saveShows()
-            searchResultData.removeAll()
-            isShowingTextField = false
             newShow = ""
         case .movies:
-            movieDataManager.addMovie(movie: result.title)
-            searchResultData.removeAll()
-            isShowingTextField = false
+            movieDataManager.addMovie(movie: result.title, posterURL: result.poster)
             movieDataManager.saveMovies()
             newMovie = ""
         }
+        
+        searchResultData.removeAll()
+        isShowingTextField = false
     }
     
     /// Creates a string with the current season and episode stats for a show.
@@ -351,74 +332,49 @@ struct ContentView: View {
     /// - Returns: The view of the text field and the list of search results.
     @ViewBuilder
     func showRankedTextField() -> some View {
-        if mediaType == .shows {
-            createTextField(fieldText: "Enter Show")
-            
-            List {
-                ForEach(searchResultData, id: \.imdbID) { result in
-                    if result.mediaType == "series" {
-                        HStack {
-                            displayImage(imageURL: result.poster, imgWidth: 100, imgHeight: 150)
-                            
-                            Spacer() // these spacers allow for the title/year to be centered
-                            
-                            Button("\(result.title), \(result.year)") {
-                                handleNewMediaAdded(result: result, posterURL: result.poster)
-                            }
-                            .font(.headline) // make it more prominent
-                            
-                            Spacer() // these spacers allow for the title/year to be centered
+        let (fieldText, showOrMovie) = mediaType == .shows ? ("Enter Show", "series") : ("Enter Movie", "movie")
+        
+        createSearchTextField(fieldText: fieldText)
+        
+        if searchResultData.isEmpty {
+            displayText(text: "Try entering something (else)...")
+        }
+        
+        List {
+            ForEach(searchResultData, id: \.imdbID) { result in
+                if result.type == showOrMovie {
+                    HStack {
+                        displayImageWithURL(imageURL: result.poster, imgWidth: 100, imgHeight: 150)
+                        
+                        Spacer() // these spacers allow for the title/year to be centered
+                        
+                        Button("\(result.title), \(result.year)") {
+                            handleNewMediaAdded(result: result)
                         }
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10) // Apply border correctly
-                                .stroke(Color.gray, lineWidth: 3)
-                        )
+                        .font(.headline) // make it more prominent
+                        
+                        Spacer() // these spacers allow for the title/year to be centered
                     }
-                }
-            }
-        } else { // if showing movies
-            createTextField(fieldText: "Enter Movie")
-            
-            List {
-                ForEach(searchResultData, id: \.imdbID) { result in
-                    if result.mediaType == "movie" {
-                        HStack {
-                            displayImage(imageURL: result.poster, imgWidth: 100, imgHeight: 150)
-                            
-                            Spacer() // these spacers allow for the title/year to be centered
-                            
-                            Button("\(result.title), \(result.year)") {
-                                handleNewMediaAdded(result: result, posterURL: result.poster)
-                            }
-                            .font(.headline)
-                            
-                            Spacer() // these spacers allow for the title/year to be centered
-                        }
-                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10) // Apply border correctly
+                            .stroke(Color.gray, lineWidth: 3)
+                    )
                 }
             }
         }
     }
     
-    /// Displays an image
+    /// Displays text using the correct font color.
     ///
     /// - Parameters:
-    ///   - imageURL: The url to the image.
-    ///   - imgWidth: The width of the image.
-    ///   - imgHeight: The height of the image.
-    ///   - cornerRadius: How rounded the corners of the image are
+    ///     - text: The text to be displayed.
+    ///     - isBold: True if the text should be bold.
     ///
-    /// - Returns: None.
-    func displayImage(imageURL: String?, imgWidth: CGFloat, imgHeight: CGFloat, cornerRadius: CGFloat = 10) -> some View {
-        AsyncImage(url: URL(string: imageURL ?? "")) { image in
-            image
-                .resizable()
-                .frame(width: imgWidth, height: imgHeight)
-                .cornerRadius(cornerRadius)
-        } placeholder: {
-            ProgressView("Loading...")
-        }
-        .padding(10)
+    ///  - Returns: The text view with the given text.
+    private func displayText(text: String, isBold: Bool = false) -> some View {
+        Text(text)
+            .changeAppearance(colorScheme: colorScheme)
+            .bold(isBold)
     }
 }
 

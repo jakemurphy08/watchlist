@@ -13,6 +13,7 @@ struct UserShowData: Codable {
     var currentSeason: String? = nil
     var currentEpisode: String? = nil
     var posterURL: String?
+    var ratingOutOfTen: CGFloat?
     
     init(show: String, poster: String? = nil) {
         self.show = show
@@ -100,6 +101,15 @@ class ShowDataManager: ObservableObject {
         showsData[showDataIndex].currentSeason = nil
         showsData[showDataIndex].currentEpisode = nil
         self.saveShows()
+    }
+    
+    func setUserRating(showDataIndex: Int, rating: CGFloat) {
+        showsData[showDataIndex].ratingOutOfTen = rating
+        self.saveShows()
+    }
+    
+    func getUserRating(showDataIndex: Int) -> CGFloat? {
+        return showsData[showDataIndex].ratingOutOfTen
     }
 }
 

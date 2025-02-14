@@ -11,6 +11,7 @@ import CryptoKit
 struct UserMovieData: Codable {
     var movie: String
     var posterURL: String?
+    var ratingOutOfTen: CGFloat?
     
     init(movie: String, poster: String? = nil) {
         self.movie = movie
@@ -74,5 +75,14 @@ class MovieDataManager: ObservableObject {
         } catch {
             print(error)
         }
+    }
+    
+    func setUserRating(movieDataIndex: Int, rating: CGFloat) {
+        moviesData[movieDataIndex].ratingOutOfTen = rating
+        self.saveMovies()
+    }
+    
+    func getUserRating(movieDataIndex: Int) -> CGFloat? {
+        return moviesData[movieDataIndex].ratingOutOfTen
     }
 }
