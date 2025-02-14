@@ -33,6 +33,9 @@ class ShowDataManager: ObservableObject {
         }
     }
     
+    /// Loads the shows from the JSON file into an array that holds each show and it's data.
+    ///
+    /// - Returns: None.
     func loadShows() {
         
         guard let url = url else {
@@ -50,6 +53,14 @@ class ShowDataManager: ObservableObject {
         }
     }
     
+    
+    /// Appends a new instance of a show to the array containing all shows.
+    ///
+    /// - Parameters:
+    ///   - show: The show to be added.
+    ///   - posterURL: The URL for the poster of the show.
+    ///
+    /// - Returns: None.
     func addShow(show: String, posterURL: String? = nil) {
         
         if showsData.contains(where: { showData in
@@ -61,6 +72,9 @@ class ShowDataManager: ObservableObject {
         self.saveShows()
     }
     
+    /// Saves the shows data array in a JSON file that is NOT encrypted (yet).
+    ///
+    /// - Returns: None.
     func saveShows() {
         guard let url = url else {
             print("No URL set for saving.")
@@ -79,35 +93,80 @@ class ShowDataManager: ObservableObject {
         }
     }
     
+    /// Sets the current season for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///   - season: The season to be saved.
+    ///
+    /// - Returns: None.
     func setSeason(showDataIndex: Int, season: String?) {
         showsData[showDataIndex].currentSeason = season
         self.saveShows()
     }
     
+    /// Sets the current episode for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///   - episode: The episode to be saved.
+    ///
+    /// - Returns: None.
     func setEpisode(showDataIndex: Int, episode: String?) {
         showsData[showDataIndex].currentEpisode = episode
         self.saveShows()
     }
     
+    /// Gets the current season for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///
+    /// - Returns: The currently saved season for that show.
     func getSeason(showDataIndex: Int) -> String? {
         return showsData[showDataIndex].currentSeason
     }
     
+    /// Gets the current episode for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///
+    /// - Returns: The currently saved episode for that show.
     func getEpisode(showDataIndex: Int) -> String? {
         return showsData[showDataIndex].currentEpisode
     }
     
+    /// Clears the current season and episode data.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///
+    /// - Returns: None.
     func clearCurrentSeasonAndEpisode(showDataIndex: Int) {
         showsData[showDataIndex].currentSeason = nil
         showsData[showDataIndex].currentEpisode = nil
         self.saveShows()
     }
     
+    /// Sets the current rating for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///   - rating: The rating to be saved.
+    ///
+    /// - Returns: None.
     func setUserRating(showDataIndex: Int, rating: CGFloat) {
         showsData[showDataIndex].ratingOutOfTen = rating
         self.saveShows()
     }
     
+    /// Gets the current rating for a show.
+    ///
+    /// - Parameters:
+    ///   - showDataIndex: The index of the show in the shows array.
+    ///
+    /// - Returns: The currently saved rating for that show.
     func getUserRating(showDataIndex: Int) -> CGFloat? {
         return showsData[showDataIndex].ratingOutOfTen
     }

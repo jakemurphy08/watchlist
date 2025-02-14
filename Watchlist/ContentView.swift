@@ -155,9 +155,9 @@ struct ContentView: View {
     private func createSearchTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
             .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
-                       isSearching: $isSearching,
-                       newShow: newShow,
-                       fetchData: fetchData(query: newShow))
+                                       isSearching: $isSearching,
+                                       newShow: newShow,
+                                       fetchData: fetchData(query: newShow, searchResultData: $searchResultData))
         .onSubmit {
             
             if let result = searchResultData.first {

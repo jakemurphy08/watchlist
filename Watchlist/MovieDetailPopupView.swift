@@ -26,6 +26,7 @@ struct MovieDetailPopupView: View {
     @State private var clearButtonState = ButtonState.notPressed
     @State private var saveButtonState = ButtonState.notPressed
     
+    // Local Variables
     let movie: String
     let movieIndex: Int
     let posterURL: String?
@@ -56,6 +57,9 @@ struct MovieDetailPopupView: View {
         .padding(.bottom, screenHeight)
     }
     
+    /// Creates the text field for the user to input their rating of a particular show out of ten.
+    ///
+    /// - Returns: The view of the text field to enter a rating into.
     var starRatingTextField: some View {
         TextField("Star Rating", text: $starRating)
             .keyboardType(.decimalPad)
@@ -74,6 +78,9 @@ struct MovieDetailPopupView: View {
         
     }
     
+    /// A button to save the user's current season and episode data.
+    ///
+    /// - Returns: The save data button.
     @ViewBuilder
     func saveButton() -> some View {
         
@@ -99,14 +106,6 @@ struct MovieDetailPopupView: View {
                     opacity = 1
                 }
             }
-        }
-    }
-    
-    func convertStringtoCGFloat(string: String) -> CGFloat {
-        if let doubleValue = Double(string) {
-            return CGFloat(doubleValue)
-        } else {
-            return 0.0
         }
     }
 }

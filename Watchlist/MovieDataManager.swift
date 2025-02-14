@@ -31,6 +31,9 @@ class MovieDataManager: ObservableObject {
         }
     }
     
+    /// Loads the movies from the JSON file into an array that holds each movie and it's data.
+    ///
+    /// - Returns: None.
     func loadMovies() {
         
         guard let url = url else {
@@ -48,6 +51,13 @@ class MovieDataManager: ObservableObject {
         }
     }
     
+    /// Appends a new instance of a movie to the array containing all movies.
+    ///
+    /// - Parameters:
+    ///   - movie: The movie to be added.
+    ///   - posterURL: The URL for the poster of the movie.
+    ///
+    /// - Returns: None.
     func addMovie(movie: String, posterURL: String? = nil) {
         
         if moviesData.contains(where: { movieData in
@@ -59,6 +69,9 @@ class MovieDataManager: ObservableObject {
         self.saveMovies()
     }
     
+    /// Saves the movies data array in a JSON file that is NOT encrypted (yet).
+    ///
+    /// - Returns: None.
     func saveMovies() {
         guard let url = url else {
             print("No URL set for saving.")
@@ -77,11 +90,24 @@ class MovieDataManager: ObservableObject {
         }
     }
     
+    /// Sets the current rating for a movie.
+    ///
+    /// - Parameters:
+    ///   - movieDataIndex: The index of the show in the movies array.
+    ///   - rating: The rating to be saved.
+    ///
+    /// - Returns: None.
     func setUserRating(movieDataIndex: Int, rating: CGFloat) {
         moviesData[movieDataIndex].ratingOutOfTen = rating
         self.saveMovies()
     }
     
+    /// Gets the current rating for a movie.
+    ///
+    /// - Parameters:
+    ///   - movieDataIndex: The index of the show in the movies array.
+    ///
+    /// - Returns: The currently saved rating for that show.
     func getUserRating(movieDataIndex: Int) -> CGFloat? {
         return moviesData[movieDataIndex].ratingOutOfTen
     }

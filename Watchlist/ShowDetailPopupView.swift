@@ -200,21 +200,6 @@ struct ShowDetailPopupView: View {
             }
         }
     }
-    
-    
-    /// Convert a string to a CGFloat.
-    ///
-    /// - Parameters:
-    ///   - string: The string to convert to a CGFloat.
-    ///
-    /// - Returns: The converted CGFloat.
-    func convertStringtoCGFloat(string: String) -> CGFloat {
-        if let doubleValue = Double(string) {
-            return CGFloat(doubleValue)
-        } else {
-            return 0.0
-        }
-    }
 }
 
 #Preview {
