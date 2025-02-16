@@ -6,18 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct UpNextView: View {
     
     // Environment
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.editMode) private var editMode
+    @Environment(\.modelContext) private var context
     
-    
-    @StateObject private var showDataManager = ShowDataManager(fileName: "UpNextShows.json")
-    @StateObject private var movieDataManager = MovieDataManager(fileName: "UpNextMovies.json")
-    
+    @Query private var unwatchedShowDataItems: [UnwatchedShowDataItem]
+    @Query private var unwatchedMovieDataItems: [UnwatchedMovieDataItem]
+
     // UI States
     @State public var searchResultData: [TVShowAndMovieData] = []
     @State private var mediaType: MediaType = .shows
@@ -119,21 +119,53 @@ struct UpNextView: View {
         })
     }
     
-    var backButton: some View {
-        Button {
-            dismiss()
-        } label: {
-                Image(systemName: "arrowshape.backward")
-                .padding()
-                .changeAppearance(colorScheme: colorScheme)
-        }
-    }
-    
     var cancelButton: some View {
         Button("Cancel") {
             cancelAddingAShowOrMovie()
         }
         .changeAppearance(colorScheme: colorScheme)
+    }
+    
+    /// Store a show into the dataset for shows.
+    ///
+    /// - Parameters:
+    ///   - show: The show to be added.
+    ///   - posterURL: The url for the poster of the show.
+    ///
+    /// - Returns: None.
+    func addShowItem(_ show: String, _ posterURL: String) {
+        let showItem: UnwatchedShowDataItem
+        
+        if posterURL.isEmpty == false {
+            showItem = UnwatchedShowDataItem(show: show, posterURL: posterURL)
+        } else {
+            showItem = UnwatchedShowDataItem(show: show)
+        }
+        
+        context.insert(showItem)
+        try? context.save()
+        print("\(show) added!")
+    }
+    
+    /// Store a movie into the dataset for shows.
+    ///
+    /// - Parameters:
+    ///   - movie: The movie to be added.
+    ///   - posterURL: The url for the poster of the movie.
+    ///
+    /// - Returns: None.
+    func addMovieItem(_ movie: String, _ posterURL: String) {
+        let movieItem: UnwatchedMovieDataItem
+        
+        if posterURL.isEmpty == false {
+            movieItem = UnwatchedMovieDataItem(movie: movie, posterURL: posterURL)
+        } else {
+            movieItem = UnwatchedMovieDataItem(movie: movie)
+        }
+        
+        context.insert(movieItem)
+        try? context.save()
+        print("\(movie) added!")
     }
     
     /// Displays the ranked list of shows.
@@ -151,22 +183,22 @@ struct UpNextView: View {
                     displayListHeaders(mediaType: mediaType, colorScheme: colorScheme)
                     
                     List {
-                        if showDataManager.showsData.isEmpty {
+                        if unwatchedShowDataItems.isEmpty {
                             Text("You haven't added any shows yet!")
                                 .changeAppearance(colorScheme: colorScheme)
                         } else {
-                            ForEach(showDataManager.showsData.indices, id: \.self) { index in
-                                displayText(text: "\(index  + 1). \(showDataManager.showsData[index].show)", colorScheme: colorScheme)
+                            ForEach(unwatchedShowDataItems, id: \.self) { showInList in
+                                displayText(text: "\(showInList.show)", colorScheme: colorScheme)
                             }
-                            .onDelete(perform: delete)
-                            .onMove(perform: move)
+                            .onDelete { itemsToBeDeleted in
+                                for item in itemsToBeDeleted {
+                                    deleteShow(unwatchedShowDataItems[item])
+                                }
+                            }
+//                            .onMove(perform: move)
                         }
                     }
                     .styleList()
-                    .onAppear {
-                        showDataManager.loadShows()
-                    }
-                    
                 }
             }
         }
@@ -187,22 +219,22 @@ struct UpNextView: View {
                     displayListHeaders(mediaType: mediaType, colorScheme: colorScheme)
                     
                     List {
-                        if movieDataManager.moviesData.isEmpty {
+                        if unwatchedMovieDataItems.isEmpty {
                             Text("You haven't added any movies yet!")
                                 .changeAppearance(colorScheme: colorScheme)
                         } else {
-                            ForEach(movieDataManager.moviesData.indices, id: \.self) { index in
-                                displayText(text: "\(index  + 1). \(movieDataManager.moviesData[index].movie)", colorScheme: colorScheme)
+                            ForEach(unwatchedMovieDataItems, id: \.self) { movieInList in
+                                displayText(text: "\(movieInList.movie)", colorScheme: colorScheme)
                             }
-                            .onDelete(perform: delete)
-                            .onMove(perform: move)
+                            .onDelete { indexes in
+                                for index in indexes {
+                                    deleteMovie(unwatchedMovieDataItems[index])
+                                }
+                            }
+//                            .onMove(perform: move)
                         }
                     }
                     .styleList()
-                    .onAppear {
-                        movieDataManager.loadMovies()
-                    }
-                    
                 }
             }
         }
@@ -255,7 +287,7 @@ struct UpNextView: View {
         TextField(fieldText, text: $newShow)
             .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
                                        isSearching: $isSearching,
-                                       newShow: newShow,
+                                       newMedia: newShow,
                                        fetchData: fetchData(query: newShow, searchResultData: $searchResultData))
             .onSubmit {
                 
@@ -280,12 +312,10 @@ struct UpNextView: View {
     func handleNewMediaAdded(result: TVShowAndMovieData) {
         switch mediaType {
         case .shows:
-            showDataManager.addShow(show: result.title, posterURL: result.poster)
-            showDataManager.saveShows()
+            addShowItem(result.title, result.poster)
             newShow = ""
         case .movies:
-            movieDataManager.addMovie(movie: result.title, posterURL: result.poster)
-            movieDataManager.saveMovies()
+            addMovieItem(result.title, result.poster)
             newMovie = ""
         }
         
@@ -309,37 +339,52 @@ struct UpNextView: View {
         }
     }
     
-    /// Removes the deleted show or movie from the array that displays the users ranked lists
-    /// and from the json file which is accessed by `showDataManager` or `movieDataManager`.
+    /// Removes the deleted show from the stored list of shows.
     ///
     /// - Parameters:
-    ///   - indexSet: The index of the show/movie to remove.
+    ///   - showToDelete: The show to be removed.
     ///
     /// - Returns: None.
-    func delete(indexSet: IndexSet) {
-        if mediaType == .shows {
-            showDataManager.showsData.remove(atOffsets: indexSet)
-            showDataManager.saveShows()
-        } else {
-            movieDataManager.moviesData.remove(atOffsets: indexSet)
-            movieDataManager.saveMovies()
-        }
+    private func deleteShow(_ showToDelete: UnwatchedShowDataItem) {
+            context.delete(showToDelete)
+            try? context.save()
     }
     
-    /// Moves the selected show/movie within the ranked lists.
+    /// Removes the deleted movie from the stored list of movies.
     ///
     /// - Parameters:
-    ///   - indices: The original index of the show/movie to be moved.
-    ///   - newOffset: The new index of the show/movie to be moved.
+    ///   - movieToDelete: The show to be removed.
     ///
     /// - Returns: None.
-    func move(indices: IndexSet, newOffset: Int) {
-        if mediaType == .shows {
-            showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
-            showDataManager.saveShows()
-        } else {
-            movieDataManager.moviesData.move(fromOffsets: indices, toOffset: newOffset)
-            movieDataManager.saveMovies()
+    private func deleteMovie(_ movieToDelete: UnwatchedMovieDataItem) {
+            context.delete(movieToDelete)
+            try? context.save()
+    }
+    
+    /// Moves the selected show within the ranked lists.
+    ///
+    /// - Parameters:
+    ///   - source: The original index of the show/movie to be moved.
+    ///   - destination: The new index of the show/movie to be moved.
+    ///
+    /// - Returns: None.
+    private func move(from source: IndexSet, to destination: Int) {
+        var updatedShows = Array(unwatchedShowDataItems)
+        
+        switch (mediaType) {
+        case .shows:
+            updatedShows.move(fromOffsets: source, toOffset: destination)
+            
+            for show in updatedShows {
+                context.delete(show)
+                context.insert(show)
+            }
+            
+            try? context.save()
+        case .movies:
+            break
+//            showDataManager.showsData.move(fromOffsets: indices, toOffset: newOffset)
+//            showDataManager.saveShows()
         }
     }
 }

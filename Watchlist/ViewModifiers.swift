@@ -59,7 +59,7 @@ extension View {
     func styleAddNewMediaTextField(
             isTextFieldFocused: FocusState<Bool>.Binding,
             isSearching: FocusState<Bool>.Binding,
-            newShow: String,
+            newMedia: String,
             fetchData: ()
         ) -> some View {
         self
@@ -73,7 +73,7 @@ extension View {
                 isTextFieldFocused.wrappedValue = true
                 isSearching.wrappedValue = true
             }
-            .onChange(of: newShow) {
+            .onChange(of: newMedia) {
                 fetchData
             }
     }

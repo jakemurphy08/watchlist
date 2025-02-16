@@ -20,7 +20,7 @@ public struct TVShowAndMovieData: Codable {
     let year: String
     let imdbID: String
     let type: String
-    let poster: String?
+    let poster: String
     
     // allows for the variables to have different names than the keys in the data
     enum CodingKeys: String, CodingKey {

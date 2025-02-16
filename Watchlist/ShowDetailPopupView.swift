@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ShowDetailPopupView: View {
     
@@ -25,18 +26,21 @@ struct ShowDetailPopupView: View {
     @State private var saveButtonState = ButtonState.notPressed
     
     // Environment
-    @EnvironmentObject var showDataManager: ShowDataManager
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     
     // Struct Variables
-    let show: String
     let showIndex: Int
-    let posterURL: String?
+    let showDataItem: WatchedShowDataItem
+    
+    init(showIndex: Int, showDataItem: WatchedShowDataItem) {
+        self.showIndex = showIndex
+        self.showDataItem = showDataItem
+    }
     
     var body: some View {
         VStack {
-            displayImageWithURL(imageURL: posterURL, imgWidth: imgWidth, imgHeight: imgHeight)
+            displayImageWithURL(imageURL: showDataItem.posterURL, imgWidth: imgWidth, imgHeight: imgHeight)
             
             HStack {
                 Image(systemName: "star.fill")
@@ -61,9 +65,9 @@ struct ShowDetailPopupView: View {
             .padding(.trailing, -100)
         }
         .onAppear { // sets the current season and episode when opening this view
-            currentSeason = showDataManager.getSeason(showDataIndex: showIndex) ?? ""
-            currentEpisode = showDataManager.getEpisode(showDataIndex: showIndex) ?? ""
-            starRating = String(format: "%.1f", showDataManager.getUserRating(showDataIndex: showIndex) ?? "")
+            currentSeason = getSeason() ?? ""
+            currentEpisode = getEpisode() ?? ""
+            starRating = String(format: "%.1f", getUserRating() ?? "")
         }
         .padding(.bottom, screenHeight)
     }
@@ -94,7 +98,7 @@ struct ShowDetailPopupView: View {
         Button {
             dismiss()
         } label: {
-                Image(systemName: "arrowshape.backward")
+            Image(systemName: "arrowshape.backward")
                 .padding()
                 .changeAppearance(colorScheme: colorScheme)
         }
@@ -120,7 +124,7 @@ struct ShowDetailPopupView: View {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
                 }
             }
-
+        
     }
     
     /// The text field for the user to enter their current episode.
@@ -153,8 +157,8 @@ struct ShowDetailPopupView: View {
     func clearButton() -> some View {
         
         Button("Clear Current Spot") {
-            showDataManager.setSeason(showDataIndex: showIndex, season: nil)
-            showDataManager.setEpisode(showDataIndex: showIndex, episode: nil)
+            setSeason(season: nil)
+            setEpisode(episode: nil)
             dismiss()
         }
         .styleButton(buttonState: clearButtonState, colorScheme: colorScheme)
@@ -165,7 +169,7 @@ struct ShowDetailPopupView: View {
         )
     }
     
-    /// A button to save the user's current season and episode data.
+    /// A button to save the user's current season, episode, and rating data.
     ///
     /// - Returns: The save data button.
     @ViewBuilder
@@ -175,12 +179,12 @@ struct ShowDetailPopupView: View {
             
             Button("Save") {
                 if currentSeason != "" && currentEpisode != "" {
-                    showDataManager.setSeason(showDataIndex: showIndex, season: currentSeason)
-                    showDataManager.setEpisode(showDataIndex: showIndex, episode: currentEpisode)
+                    setSeason(season: currentSeason)
+                    setEpisode(episode: currentEpisode)
                 }
                 
                 if starRating != "" {
-                    showDataManager.setUserRating(showDataIndex: showIndex, rating: convertStringtoCGFloat(string: starRating))
+                    setUserRating(rating: convertStringtoCGFloat(string: starRating))
                 }
                 
                 dismiss()
@@ -199,6 +203,57 @@ struct ShowDetailPopupView: View {
                 }
             }
         }
+    }
+    
+    /// Sets the season for a show.
+    ///
+    /// - Parameters:
+    ///   - season: The season from the user input.
+    ///
+    /// - Returns: None.
+    private func setSeason(season: String?) {
+        showDataItem.currentSeason = season
+    }
+    
+    /// Sets the episode for a show.
+    ///
+    /// - Parameters:
+    ///   - season: The episode from the user input.
+    ///
+    /// - Returns: None.
+    private func setEpisode(episode: String?) {
+        showDataItem.currentEpisode = episode
+    }
+    
+    /// Sets the rating for a show.
+    ///
+    /// - Parameters:
+    ///   - season: The rating from the user input.
+    ///
+    /// - Returns: None.
+    private func setUserRating(rating: CGFloat) {
+        showDataItem.ratingOutOfTen = rating
+    }
+    
+    /// Gets the season for a show.
+    ///
+    /// - Returns: The season from the stored data for a show.
+    private func getSeason() -> String? {
+        return showDataItem.currentSeason
+    }
+    
+    /// Gets the episode for a show.
+    ///
+    /// - Returns: The episode from the stored data for a show.
+    private func getEpisode() -> String? {
+        return showDataItem.currentEpisode
+    }
+    
+    /// Gets the rating for a show.
+    ///
+    /// - Returns: The rating from the stored data for a show.
+    private func getUserRating() -> CGFloat? {
+        return showDataItem.ratingOutOfTen
     }
 }
 

@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct WatchlistApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                ContentView()
+            }
         }
+        .modelContainer(for: [WatchedShowDataItem.self, UnwatchedShowDataItem.self, WatchedMovieDataItem.self, UnwatchedMovieDataItem.self])
     }
 }

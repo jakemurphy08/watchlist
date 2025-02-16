@@ -10,11 +10,10 @@ import SwiftUI
 struct MovieDetailPopupView: View {
     
     // Focus States
-    @FocusState private var isRatingTextFieldFocused: Bool
+    @FocusState private var shiftScreenHeightWhileTextFieldFocused: Bool
     
     // Environment
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var movieDataManager: MovieDataManager
     @Environment(\.colorScheme) var colorScheme
     
     // UI States
@@ -27,13 +26,17 @@ struct MovieDetailPopupView: View {
     @State private var saveButtonState = ButtonState.notPressed
     
     // Local Variables
-    let movie: String
     let movieIndex: Int
-    let posterURL: String?
+    let movieDataItem: WatchedMovieDataItem
+    
+    init(movieIndex: Int, movieDataItem: WatchedMovieDataItem) {
+        self.movieIndex = movieIndex
+        self.movieDataItem = movieDataItem
+    }
     
     var body: some View {
         VStack {
-            displayImageWithURL(imageURL: posterURL, imgWidth: imgWidth, imgHeight: imgHeight)
+            displayImageWithURL(imageURL: movieDataItem.posterURL, imgWidth: imgWidth, imgHeight: imgHeight)
             
             HStack {
                 Image(systemName: "star.fill")
@@ -52,7 +55,7 @@ struct MovieDetailPopupView: View {
             .padding(.trailing, -100)
         }
         .onAppear { // sets the current season and episode when opening this view
-            starRating = String(format: "%.1f", movieDataManager.getUserRating(movieDataIndex: movieIndex) ?? "")
+            starRating = String(format: "%.1f", getUserRating() ?? "")
         }
         .padding(.bottom, screenHeight)
     }
@@ -66,10 +69,10 @@ struct MovieDetailPopupView: View {
             .padding()
             .frame(width: 135, height: 30)
             .textFieldStyle(RoundedBorderTextFieldStyle())
-            .focused($isRatingTextFieldFocused)
-            .onChange(of: isRatingTextFieldFocused) {
+            .focused($shiftScreenHeightWhileTextFieldFocused)
+            .onChange(of: shiftScreenHeightWhileTextFieldFocused) {
                 withAnimation {
-                    screenHeight = isRatingTextFieldFocused ? 300 : 0
+                    screenHeight = shiftScreenHeightWhileTextFieldFocused ? 300 : 0
                 }
                 DispatchQueue.main.async {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
@@ -78,17 +81,17 @@ struct MovieDetailPopupView: View {
         
     }
     
-    /// A button to save the user's current season and episode data.
+    /// A button to save the user's rating for a movie.
     ///
     /// - Returns: The save data button.
     @ViewBuilder
     func saveButton() -> some View {
         
-        if starRating != "" {
+        if starRating != "" { // can save seasons/episode data separate from starRating
             
             Button("Save") {
                 if starRating != "" {
-                    movieDataManager.setUserRating(movieDataIndex: movieIndex, rating: convertStringtoCGFloat(string: starRating))
+                    setUserRating(rating: convertStringtoCGFloat(string: starRating))
                 }
                 
                 dismiss()
@@ -107,6 +110,23 @@ struct MovieDetailPopupView: View {
                 }
             }
         }
+    }
+    
+    /// Sets the rating for a show.
+    ///
+    /// - Parameters:
+    ///   - season: The rating from the user input.
+    ///
+    /// - Returns: None.
+    private func setUserRating(rating: CGFloat) {
+        movieDataItem.ratingOutOfTen = rating
+    }
+    
+    /// Gets the rating for a show.
+    ///
+    /// - Returns: The rating from the stored data for a show.
+    private func getUserRating() -> CGFloat? {
+        return movieDataItem.ratingOutOfTen
     }
 }
 
