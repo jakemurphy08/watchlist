@@ -57,7 +57,6 @@ extension View {
     
     /// Styles the text fields when a user is searching for new media.
     func styleAddNewMediaTextField(
-            isTextFieldFocused: FocusState<Bool>.Binding,
             isSearching: FocusState<Bool>.Binding,
             newMedia: String,
             fetchData: ()
@@ -65,12 +64,10 @@ extension View {
         self
             .padding()
             .textFieldStyle(RoundedBorderTextFieldStyle())
-            .focused(isTextFieldFocused)
             .focused(isSearching)
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.words)
             .onAppear {
-                isTextFieldFocused.wrappedValue = true
                 isSearching.wrappedValue = true
             }
             .onChange(of: newMedia) {

@@ -285,8 +285,7 @@ struct UpNextView: View {
     /// - Returns: The view of the text field.
     func createSearchTextField(fieldText: String) -> some View {
         TextField(fieldText, text: $newShow)
-            .styleAddNewMediaTextField(isTextFieldFocused: $isTextFieldFocused,
-                                       isSearching: $isSearching,
+            .styleAddNewMediaTextField(isSearching: $isSearching,
                                        newMedia: newShow,
                                        fetchData: fetchData(query: newShow, searchResultData: $searchResultData))
             .onSubmit {
