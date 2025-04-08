@@ -15,9 +15,9 @@ Watchlist allows a user to track their favorite TV shows and movies and rank the
 - Loca JSON file storage
 
 ## Screenshots
-<img width="291" alt="home-screen" src="https://github.com/user-attachments/assets/13a2c36f-f02d-4cb8-932b-b2054de52eae" />
-<img width="292" alt="search-screen" src="https://github.com/user-attachments/assets/d832e4c1-a567-45fb-b434-d099aeaca1bc" />
-<img width="292" alt="show-detail-view" src="https://github.com/user-attachments/assets/5f60ffd6-b133-41de-a0a4-6b562775a8b6" />
+<img width="291" alt="home-screen" src="[https://github.com/user-attachments/assets/13a2c36f-f02d-4cb8-932b-b2054de52eae](https://github.com/jakemurphy08/watchlist/blob/main/app_screenshots/home-screen.png)" />
+<img width="292" alt="search-screen" src="[https://github.com/user-attachments/assets/d832e4c1-a567-45fb-b434-d099aeaca1bc](https://github.com/jakemurphy08/watchlist/blob/main/app_screenshots/search-screen.png)" />
+<img width="292" alt="show-detail-view" src="[https://github.com/user-attachments/assets/5f60ffd6-b133-41de-a0a4-6b562775a8b6](https://github.com/jakemurphy08/watchlist/blob/main/app_screenshots/detail-screen.png)" />
 
 ## Why I made Watchlist
 
