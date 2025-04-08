@@ -15,6 +15,7 @@ struct MovieDetailPopupView: View {
     // Environment
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var context
     
     // UI States
     @State private var starRating: String = ""
@@ -24,6 +25,7 @@ struct MovieDetailPopupView: View {
     @State private var screenHeight: CGFloat = 0
     @State private var clearButtonState = ButtonState.notPressed
     @State private var saveButtonState = ButtonState.notPressed
+    @State private var isRatingBeingChanged: Bool = false
     
     // Local Variables
     let movieIndex: Int
@@ -42,7 +44,7 @@ struct MovieDetailPopupView: View {
                 Image(systemName: "star.fill")
                     .resizable()
                     .scaledToFit()
-                    .foregroundStyle(.yellow)
+                    .changeAppearance(colorScheme: colorScheme)
                 starRatingTextField
             }
             .frame(height: 30)
@@ -51,8 +53,7 @@ struct MovieDetailPopupView: View {
             VStack {
                 saveButton()
             }
-            .padding(.leading, 160)
-            .padding(.trailing, -100)
+            .padding(.leading, 180)
         }
         .onAppear { // sets the current season and episode when opening this view
             starRating = String(format: "%.1f", getUserRating() ?? "")
@@ -73,6 +74,7 @@ struct MovieDetailPopupView: View {
             .onChange(of: shiftScreenHeightWhileTextFieldFocused) {
                 withAnimation {
                     screenHeight = shiftScreenHeightWhileTextFieldFocused ? 300 : 0
+                    isRatingBeingChanged = true
                 }
                 DispatchQueue.main.async {
                     UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
@@ -87,12 +89,13 @@ struct MovieDetailPopupView: View {
     @ViewBuilder
     func saveButton() -> some View {
         
-        if starRating != "" { // can save seasons/episode data separate from starRating
+        if isRatingBeingChanged == true {
             
             Button("Save") {
-                if starRating != "" {
-                    setUserRating(rating: convertStringtoCGFloat(string: starRating))
-                }
+                setUserRating(rating: convertStringtoCGFloat(string: starRating))
+                
+                
+                try? context.save()
                 
                 dismiss()
             }
@@ -103,12 +106,7 @@ struct MovieDetailPopupView: View {
                     .onEnded { _ in saveButtonState = .notPressed }
             )
             .padding(.leading, 105)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeIn(duration: 0.5)) {
-                    opacity = 1
-                }
-            }
+            .transition(.move(edge: .trailing))
         }
     }
     

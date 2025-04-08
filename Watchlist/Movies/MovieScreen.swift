@@ -22,38 +22,25 @@ struct MovieScreen: View {
     @FocusState private var isSearching: Bool
     
     // UI States
-    @State private var newMovie: String = ""
-    @State public var searchResultData: [TVShowAndMovieData] = []
-    @State private var isShowingTextField: Bool = false
     @State private var buttonState = ButtonState.notPressed
+    @State private var deleteMode: Bool = false
     
     var body: some View {
         ZStack {
             VStack {
-                displayMovieList(isSearching: isSearching)
-            
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        
-                        addMovieButton
-                            .styleButton(buttonState: buttonState, colorScheme: colorScheme)
-                            .simultaneousGesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { _ in buttonState = .pressed }
-                                    .onEnded { _ in buttonState = .notPressed })
-                    }
-                    .padding()
-                    .padding(.trailing, -45)
-                    .padding(.bottom, 70)
-                    }
+                displayMovieList()
+                
+                Spacer()
+                
+                addMovieButton
+                
+                Spacer()
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                displayText(text: "Your Rankings", isBold: true, colorScheme: colorScheme)
+                displayAppLogo
             }
         
             ToolbarItem(placement: .topBarTrailing) {
@@ -64,51 +51,88 @@ struct MovieScreen: View {
         }
     }
     
+    // Displays the apps logo
+    var displayAppLogo: some View {
+        if colorScheme == .light {
+            Image(.lightModeLogo)
+                .resizable()
+                .frame(width: 40, height: 40)
+        } else {
+            Image(.darkModeLogo)
+                .resizable()
+                .frame(width: 40, height: 40)
+        }
+    }
+    
     /// Displays the ranked list of movies.
-    ///
-    /// - Parameters:
-    ///   - isSearching: True if the text field search bar is active when someone pressed `Add Movie`.
     ///
     /// - Returns: The view of the list.
     @ViewBuilder
-    func displayMovieList(isSearching: Bool) -> some View {
-        ZStack {
-            if isSearching == false {
-                VStack(spacing: 0) {
-                    
-                    displayListHeaders(mediaType: .movies, colorScheme: colorScheme)
-                    
-                    List {
-                        if watchedMovieDataItems.isEmpty {
-                            displayText(text: "You haven't added any movies yet!", colorScheme: colorScheme)
-                        } else {
-                            ForEach(watchedMovieDataItems, id: \.self) { movieInList in
-                                if let movieIndex = watchedMovieDataItems.firstIndex(of: movieInList) {
-                                    NavigationLink(destination: MovieDetailPopupView(movieIndex: movieIndex, movieDataItem: movieInList)) {
-                                        HStack {
-                                            StarRatingOverlay(rating: movieInList.ratingOutOfTen ?? 0.0, colorScheme: colorScheme)
-                                            displayText(text: "\(movieInList.movie)", colorScheme: colorScheme)
-                                        }
-                                    }
+    func displayMovieList() -> some View {
+        
+        displayListHeaders(mediaType: .movies, colorScheme: colorScheme, deleteMode: $deleteMode)
+        
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                
+                if watchedMovieDataItems.isEmpty {
+                    displayText(text: "You haven't added any movies yet!", colorScheme: colorScheme)
+                } else {
+                    ForEach(watchedMovieDataItems, id: \.self) { movieInList in
+                        if let movieIndex = watchedMovieDataItems.firstIndex(of: movieInList) {
+                            NavigationLink(destination: MovieDetailPopupView(movieIndex: movieIndex, movieDataItem: movieInList)) {
+                                HStack {
+                                    StarRatingOverlay(rating: movieInList.ratingOutOfTen ?? 0.0, colorScheme: colorScheme)
+                                    displayText(text: "\(movieInList.movie)",
+                                                colorScheme: colorScheme)
+                                    
+                                    Spacer()
+                                    
+                                    deleteOrStandardMode(currentMovie: movieInList)
                                 }
                             }
-                            .onDelete { indexes in
-                                for index in indexes {
-                                    deleteMovie(watchedMovieDataItems[index])
-                                }
-                            }
-//                            .onMove(perform: move)
+                            .transition(.scale)
                         }
                     }
-                    .styleList()
+                    //                            .onMove(perform: move)
                 }
             }
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    /// Displays either the delete mode or standard mode dependent on `deleteMode`.
+    ///
+    /// - Parameters:
+    ///   - currentShow: The show that could be deleted if the user selects the trash can icon.
+    /// - Returns: The view of either delete mode or standard mode.
+    @ViewBuilder
+    private func deleteOrStandardMode(currentMovie: WatchedMovieDataItem) -> some View {
+        if deleteMode {
+            Button {
+                deleteMovie(currentMovie)
+            } label: {
+                Image(systemName: "delete.left")
+                    .changeAppearance(colorScheme: colorScheme)
+            }
+            .transition(.move(edge: .trailing).combined(with: .scale))
+        } else { // Standard mode
+            Image(systemName: "slider.horizontal.3")
+                .changeAppearance(colorScheme: colorScheme)
+                .transition(.move(edge: .leading).combined(with: .scale))
         }
     }
     
     /// Creates the button for `Add Movie`
     var addMovieButton: some View {
-        NavigationLink("Add Movie", destination: SearchNewMovieScreen())
+        NavigationLink("Add Movie", destination: SearchNewMovieScreen(watchedStatus: .watched))
+            .styleButton(buttonState: buttonState, colorScheme: colorScheme)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in buttonState = .pressed }
+                    .onEnded { _ in buttonState = .notPressed })
+            .padding()
+            .padding(.bottom, 120)
     }
     
     /// Removes the deleted movie from the stored list of movies.
@@ -118,8 +142,10 @@ struct MovieScreen: View {
     ///
     /// - Returns: None.
     private func deleteMovie(_ movieToDelete: WatchedMovieDataItem) {
+        withAnimation {
             context.delete(movieToDelete)
             try? context.save()
+        }
     }
     
     /// Moves the selected show within the ranked lists.

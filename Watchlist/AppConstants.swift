@@ -11,6 +11,7 @@ import SwiftUI
 public struct AppColors {
     static let mainColor = Color(red: 17/255, green: 22/255, blue: 66/255)
     static let secondaryColor = Color(red: 49/255, green: 56/255, blue: 112/255)
+    static let mainColorInverted = Color(red: 238/255, green: 233/255, blue: 189/255)
 }
 
 public enum MediaType {
@@ -21,6 +22,11 @@ public enum MediaType {
 public enum ButtonState {
     case pressed
     case notPressed
+}
+
+public enum WatchedStatus {
+    case watched
+    case notWatched
 }
 
 /// # Functions
@@ -67,14 +73,27 @@ public func displayImageWithURL(imageURL: String?, imgWidth: CGFloat, imgHeight:
 ///   - colorScheme: The appearance mode of the phone. Either `light` or `dark`.
 ///
 /// - Returns: An HStack containing the headers.
-public func displayListHeaders(mediaType: MediaType, colorScheme: ColorScheme) -> some View {
+public func displayListHeaders(mediaType: MediaType, colorScheme: ColorScheme, deleteMode: Binding<Bool>) -> some View {
     HStack {
         Text(mediaType == .shows ? "SHOWS" : "MOVIES")
             .styleListHeaderText(colorScheme, position: .leading)
         Spacer()
-        EditButton()
+        
+        if deleteMode.wrappedValue {
+            Button("DONE") {
+                withAnimation {
+                    deleteMode.wrappedValue.toggle()
+                }
+            }
             .styleListHeaderText(colorScheme, position: .trailing)
-            .textCase(.uppercase)
+        } else {
+            Button("EDIT") {
+                withAnimation {
+                    deleteMode.wrappedValue.toggle()
+                }
+            }
+            .styleListHeaderText(colorScheme, position: .trailing)
+        }
     }
 }
 
@@ -105,7 +124,7 @@ public func StarRatingOverlay(rating: CGFloat, colorScheme: ColorScheme) -> some
             Image(systemName: "star.fill")
                 .resizable()
                 .scaledToFit()
-                .foregroundColor(.yellow)
+                .changeAppearance(colorScheme: colorScheme)
                 .mask(
                     GeometryReader { geo in
                         Rectangle()
@@ -122,6 +141,7 @@ public func StarRatingOverlay(rating: CGFloat, colorScheme: ColorScheme) -> some
         
         Text("\(String(format: "%.1f", rating))")
             .font(.system(size: 8))
+            .changeAppearance(colorScheme: colorScheme)
     }
-    .frame(width: 35, height:35)
+    .frame(width: 35, height: 35)
 }

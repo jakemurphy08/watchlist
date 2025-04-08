@@ -13,17 +13,19 @@ extension View {
     func styleSegmentedPicker() -> some View {
         self
             .pickerStyle(.segmented)
-            .padding(.horizontal, 120)
             .padding(.top, 40)
+            .padding(.bottom, 10)
+            .frame(width: 200)
         
     }
     
     /// Styles the lists that contain shows/movies.
     func styleList() -> some View {
         self
-            .shadow(radius: 3)
+//            .shadow(radius: 3)
             .scrollContentBackground(.hidden)
-            .frame(maxHeight: 450)
+            .listStyle(.plain)
+            .frame(maxHeight: 600)
     }
     
     /// Styles the header of a list. For instance, the `SHOWS` and `EDIT` buttons above each list.
@@ -38,19 +40,19 @@ extension View {
     /// Changes the appearance of it's caller depending on dark/light mode.
     func changeAppearance(colorScheme: ColorScheme) -> some View {
         self
-            .foregroundStyle(colorScheme == .dark ? Color.white : AppColors.mainColor)
+            .foregroundStyle(colorScheme == .dark ? AppColors.mainColorInverted : AppColors.mainColor)
     }
     
     /// Styles a button to be blue and have correct padding.
     func styleButton(buttonState: ButtonState, colorScheme: ColorScheme) -> some View {
         self
             .padding()
-            .padding(.trailing, 30)
-            .background(colorScheme == .dark ? Color.white : AppColors.mainColor)
-            .cornerRadius(50)
+            .padding(.horizontal, 10)
+            .background(colorScheme == .dark ? AppColors.mainColorInverted : AppColors.mainColor)
+            .cornerRadius(buttonState == .pressed ? 50 : 20)
             .scaleEffect(buttonState == .pressed ? 0.9 : 1)
             .opacity(buttonState == .pressed ? 0.95 : 1)
-            .foregroundColor(colorScheme == .dark ? AppColors.mainColor : Color.white)
+            .foregroundColor(colorScheme == .dark ? AppColors.mainColor : AppColors.mainColorInverted)
             .animation(.easeInOut(duration: 0.2), value: buttonState)
             .edgesIgnoringSafeArea(.all)
     }

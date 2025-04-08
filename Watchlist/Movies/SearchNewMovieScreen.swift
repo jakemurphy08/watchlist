@@ -21,6 +21,8 @@ struct SearchNewMovieScreen: View {
     // Focus States
     @FocusState private var isSearching: Bool
     
+    var watchedStatus: WatchedStatus
+    
     var body: some View {
         ZStack {
             VStack {
@@ -31,19 +33,6 @@ struct SearchNewMovieScreen: View {
                 Spacer()
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                cancelButton
-            }
-        }
-    }
-    
-    /// Creates the button for `Cancel`
-    var cancelButton: some View {
-        Button("Cancel") {
-            dismiss()
-        }
-        .changeAppearance(colorScheme: colorScheme)
     }
     
     /// Displays a text field for searching for a show. It styles the field accordingly and handles the user pressing `return`.
@@ -77,12 +66,17 @@ struct SearchNewMovieScreen: View {
     ///
     /// - Returns: None.
     private func addMovieItem(_ movie: String, _ posterURL: String) {
-        let movieItem: WatchedMovieDataItem
+        let movieItem: any PersistentModel
         
-        if posterURL.isEmpty == false {
-            movieItem = WatchedMovieDataItem(movie: movie, posterURL: posterURL)
-        } else {
-            movieItem = WatchedMovieDataItem(movie: movie)
+        switch watchedStatus {
+        case .watched:
+            if posterURL.isEmpty == false {
+                movieItem = WatchedMovieDataItem(movie: movie, posterURL: posterURL)
+            } else {
+                movieItem = WatchedMovieDataItem(movie: movie)
+            }
+        case .notWatched:
+            movieItem = UnwatchedMovieDataItem(movie: movie)
         }
         
         context.insert(movieItem)

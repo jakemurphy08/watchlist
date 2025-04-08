@@ -24,7 +24,7 @@ class WatchedMovieDataItem {
 class UnwatchedMovieDataItem {
     @Attribute(.unique) var movie: String
     
-    init(movie: String, posterURL: String? = nil) {
+    init(movie: String) {
         self.movie = movie
     }
 }

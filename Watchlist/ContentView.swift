@@ -15,21 +15,34 @@ struct ContentView: View {
 
     // UI states
     @State private var mediaType: MediaType = .shows
+    @State private var isAnimated: Bool = false
     
     
     var body: some View {
-        ZStack {
-            VStack {
-                Picker("Select Media", selection: $mediaType) {
-                    Text("Shows").tag(MediaType.shows)
-                    Text("Movies").tag(MediaType.movies)
-                }
-                .styleSegmentedPicker()
-                
-                if mediaType == .shows {
-                    ShowScreen()
-                } else {
-                    MovieScreen()
+        NavigationStack {
+            ZStack {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Picker("Select Media", selection: $mediaType) {
+                            Text("Shows").tag(MediaType.shows)
+                            Text("Movies").tag(MediaType.movies)
+                        }
+                        .styleSegmentedPicker()
+                        
+                        Spacer()
+                    }
+                    
+                    ZStack {
+                        if mediaType == .shows {
+                            ShowScreen()
+                                .transition(.move(edge: .leading))
+                        } else {
+                            MovieScreen()
+                                .transition(.move(edge: .trailing))
+                        }
+                    }
+                    .animation(.default, value: mediaType)
                 }
             }
         }

@@ -22,6 +22,8 @@ struct SearchNewShowScreen: View {
     // Focus States
     @FocusState private var isSearching: Bool
     
+    var watchedStatus: WatchedStatus
+    
     var body: some View {
         ZStack {
             VStack {
@@ -32,19 +34,6 @@ struct SearchNewShowScreen: View {
                 Spacer()
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                cancelButton
-            }
-        }
-    }
-    
-    /// Creates the button for `Cancel`
-    var cancelButton: some View {
-        Button("Cancel") {
-            dismiss()
-        }
-        .changeAppearance(colorScheme: colorScheme)
     }
     
     /// Displays the text field after pressing `Add Show`  with search results from the users entry.
@@ -118,7 +107,7 @@ struct SearchNewShowScreen: View {
         dismiss()
     }
     
-    /// Store a show into the dataset for shows.
+    /// Store a show into the dataset for shows. This uses the `watchedStatus` enum to decide which dataset to store the new show into.
     ///
     /// - Parameters:
     ///   - show: The show to be added.
@@ -126,12 +115,17 @@ struct SearchNewShowScreen: View {
     ///
     /// - Returns: None.
     private func addShowItem(_ show: String, _ posterURL: String) {
-        let showItem: WatchedShowDataItem
+        let showItem: any PersistentModel
         
-        if posterURL.isEmpty == false {
-            showItem = WatchedShowDataItem(show: show, posterURL: posterURL)
-        } else {
-            showItem = WatchedShowDataItem(show: show)
+        switch watchedStatus {
+        case .watched:
+            if posterURL.isEmpty == false {
+                showItem = WatchedShowDataItem(show: show, posterURL: posterURL)
+            } else {
+                showItem = WatchedShowDataItem(show: show)
+            }
+        case .notWatched:
+            showItem = UnwatchedShowDataItem(show: show)
         }
         
         context.insert(showItem)
@@ -141,5 +135,5 @@ struct SearchNewShowScreen: View {
 }
 
 #Preview {
-    SearchNewShowScreen()
+    SearchNewShowScreen(watchedStatus: .watched)
 }
